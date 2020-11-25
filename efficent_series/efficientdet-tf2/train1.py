@@ -1,3 +1,4 @@
+import os
 import numpy as np
 import tensorflow as tf
 from tensorflow import keras
@@ -8,6 +9,8 @@ from nets.efficientdet import Efficientdet
 from tensorflow.keras.callbacks import TensorBoard, ReduceLROnPlateau, EarlyStopping
 from utils.utils import BBoxUtility, ModelCheckpoint
 from utils.anchors import get_anchors
+
+os.environ["CUDA_VISIBLE_DEVICES"]="1,3"
 
 #---------------------------------------------------#
 #   获得类和先验框
@@ -35,7 +38,7 @@ if __name__ == "__main__":
     #   训练前，请指定好phi和model_path
     #   二者所使用Efficientdet版本要相同
     #-------------------------------------------#
-    phi = 0
+    phi = 3
     annotation_path = '2007_train.txt'
 
     classes_path = 'model_data/voc_classes.txt' 
@@ -44,13 +47,13 @@ if __name__ == "__main__":
     #-------------------------------------------#
     #   权值文件的下载请看README
     #-------------------------------------------#
-    model_path = "model_data/efficientdet-d0-voc.h5"
+#     model_path = "model_data/efficientdet-d0-voc.h5"
 
-    model = Efficientdet(phi,num_classes=NUM_CLASSES)
+#     model = Efficientdet(phi,num_classes=NUM_CLASSES)
     priors = get_anchors(image_sizes[phi])
     bbox_util = BBoxUtility(NUM_CLASSES, priors)
 
-    model.load_weights(model_path,by_name=True,skip_mismatch=True)
+#     model.load_weights(model_path,by_name=True,skip_mismatch=True)
 
     # 0.1用于验证，0.9用于训练
     val_split = 0.1
@@ -65,7 +68,7 @@ if __name__ == "__main__":
     # 训练参数设置
     logging = TensorBoard(log_dir="logs")
     reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=0.5, patience=2, verbose=1)
-    checkpoint = ModelCheckpoint('logs/ep{epoch:03d}-loss{loss:.3f}-val_loss{val_loss:.3f}.h5',
+    checkpoint = ModelCheckpoint('logs/phi3-ep{epoch:03d}-loss{loss:.3f}-val_loss{val_loss:.3f}.h5',
         monitor='val_loss', save_weights_only=True, save_best_only=False, period=1)
     early_stopping = EarlyStopping(monitor='val_loss', min_delta=0, patience=6, verbose=1)
 
@@ -76,63 +79,77 @@ if __name__ == "__main__":
     #   Freeze_Epoch为冻结训练的世代
     #   Epoch总训练世代
     #------------------------------------------------------#
-    for i in range(freeze_layers[phi]):
-        model.layers[i].trainable = False
+#     for i in range(freeze_layers[phi]):
+#         model.layers[i].trainable = False
 
     if True:
         #--------------------------------------------#
         #   BATCH_SIZE不要太小，不然训练效果很差
         #--------------------------------------------#
-        BATCH_SIZE = 4
+        BATCH_SIZE = 16
         Lr = 1e-3
         Init_Epoch = 0
         Freeze_Epoch = 50
         gen = Generator(bbox_util, BATCH_SIZE, lines[:num_train], lines[num_train:],
                         (image_sizes[phi], image_sizes[phi]),NUM_CLASSES)
-        model.compile(loss={
-                    'regression'    : smooth_l1(),
-                    'classification': focal()
-                },optimizer=keras.optimizers.Adam(Lr)
-        )   
-        print('Train on {} samples, val on {} samples, with batch size {}.'.format(num_train, num_val, BATCH_SIZE))
-        model.fit(
-                gen.generate(True,eager=False), 
-                steps_per_epoch=max(1, num_train//BATCH_SIZE),
-                validation_data=gen.generate(False,eager=False), 
-                validation_steps=max(1, num_val//BATCH_SIZE),
-                epochs=Freeze_Epoch, 
-                verbose=1,
-                initial_epoch=Init_Epoch ,
-                callbacks=[logging, checkpoint, reduce_lr, early_stopping]
-            )
+        
+        strategy = tf.distribute.MirroredStrategy()
+        print('Number of devices: {}'.format(strategy.num_replicas_in_sync))
+        
+        with strategy.scope():
+            
+            model = Efficientdet(phi,num_classes=NUM_CLASSES)
+            for i in range(freeze_layers[phi]):
+                model.layers[i].trainable = False
+                
+            model.compile(loss={
+                        'regression'    : smooth_l1(),
+                        'classification': focal()
+                    },optimizer=keras.optimizers.Adam(Lr)
+            )   
+            print('Train on {} samples, val on {} samples, with batch size {}.'.format(num_train, num_val, BATCH_SIZE))
+            model.fit(
+                    gen.generate(True,eager=False), 
+                    steps_per_epoch=max(1, num_train//BATCH_SIZE),
+                    validation_data=gen.generate(False,eager=False), 
+                    validation_steps=max(1, num_val//BATCH_SIZE),
+                    epochs=Freeze_Epoch, 
+                    verbose=1,
+                    initial_epoch=Init_Epoch ,
+                    callbacks=[logging, checkpoint, reduce_lr, early_stopping]
+                )
 
-    for i in range(freeze_layers[phi]):
-        model.layers[i].trainable = True
+#     for i in range(freeze_layers[phi]):
+#         model.layers[i].trainable = True
 
     if True:
         #--------------------------------------------#
         #   BATCH_SIZE不要太小，不然训练效果很差
         #--------------------------------------------#
-        BATCH_SIZE = 4
+        BATCH_SIZE = 16
         Lr = 5e-5
         Freeze_Epoch = 50
         Epoch = 100
         gen = Generator(bbox_util, BATCH_SIZE, lines[:num_train], lines[num_train:],
                         (image_sizes[phi], image_sizes[phi]),NUM_CLASSES)
-
-        model.compile(loss={
-                    'regression'    : smooth_l1(),
-                    'classification': focal()
-                },optimizer=keras.optimizers.Adam(Lr)
-        )   
-        print('Train on {} samples, val on {} samples, with batch size {}.'.format(num_train, num_val, BATCH_SIZE))
-        model.fit(
-                gen.generate(True,eager=False), 
-                steps_per_epoch=max(1, num_train//BATCH_SIZE),
-                validation_data=gen.generate(False,eager=False), 
-                validation_steps=max(1, num_val//BATCH_SIZE),
-                epochs=Epoch, 
-                verbose=1,
-                initial_epoch=Freeze_Epoch,
-                callbacks=[logging, checkpoint, reduce_lr, early_stopping]
-            )
+        
+        with strategy.scope():
+            for i in range(freeze_layers[phi]):
+                model.layers[i].trainable = True
+                
+            model.compile(loss={
+                        'regression'    : smooth_l1(),
+                        'classification': focal()
+                    },optimizer=keras.optimizers.Adam(Lr)
+            )   
+            print('Train on {} samples, val on {} samples, with batch size {}.'.format(num_train, num_val, BATCH_SIZE))
+            model.fit(
+                    gen.generate(True,eager=False), 
+                    steps_per_epoch=max(1, num_train//BATCH_SIZE),
+                    validation_data=gen.generate(False,eager=False), 
+                    validation_steps=max(1, num_val//BATCH_SIZE),
+                    epochs=Epoch, 
+                    verbose=1,
+                    initial_epoch=Freeze_Epoch,
+                    callbacks=[logging, checkpoint, reduce_lr, early_stopping]
+                )
