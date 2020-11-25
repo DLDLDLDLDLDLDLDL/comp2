@@ -1,3 +1,7 @@
+# EfficientDet
+
+Our implement is under ```ours``` directory.
+
 ## Model Training Guide
 
 ### ***Command flags***
@@ -27,6 +31,9 @@ For example, train EfficicentDet D0 with ImageNet pretrained backbone and Weight
 
 BUJO+ Environment:
 - GPU: 2080Ti 10986MB
+- Python 3.6.8 :: Anaconda, Inc.
+- Tensorflow: 2.2.0, with GPU support
+- Cuda compilation tools, release 10.0, V10.0.130
 
 [***Here***](https://drive.google.com/drive/folders/1xFXLxnsf_HqB7hy66OikNNzLpItV3ctG) is the  trained checkpoint.
 
@@ -36,8 +43,7 @@ BUJO+ Environment:
 
 ```python3 train.py --snapshot imagenet --phi 1 --weighted-bifpn --gpu 3 --random-transform --compute-val-loss --freeze-backbone --batch-size 32 --steps 150 --epochs 100 pascal /opt/shared-disk2/sychou/comp2/VOCdevkit/VOC2007/```
 
-- Model:
-Backbone: EfficeintNet B1, phi 1
+- Backbone: EfficeintNet B1, phi 1
 
 #### ***pascal_99_0.1957_0.1596.h5***
 The final result(Epoch 100) of the first time training. Training: mAp 0.97, Testing: mAp 0.74
@@ -56,9 +62,14 @@ It perhaps overfits.
 
 - command:
 
+```python3 train.py --snapshot imagenet --phi 3 --weighted-bifpn --gpu 3 --random-transform --compute-val-loss --freeze-backbone --batch-size 8 --steps 150 --epochs 100 pascal /opt/shared-disk2/sychou/comp2/VOCdevkit/trainval/VOC2007/```
 
-- Model:
-Backbone: EfficeintNet B3, phi 3
+- Backbone: EfficeintNet B3, phi 3
 
 #### ***pascal_45_0.3772_0.3917.h5***
 Epoch 45, mAp 0.73. Train 7.5 hours
+
+#### ***pascal_100_0.2464_0.2470.h5***
+Epoch 100, 0.9399, Train 15 hours
+
+Testing mAP: 0.7704
