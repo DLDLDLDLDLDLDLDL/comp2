@@ -1,6 +1,6 @@
 ## Model Training Guide
 
-### Command flags
+### ***Command flags***
 - --weighted-bifpn: Use Weighted BiFPN 
 - --snapshot: specify checkpoint or pretrained model, you can use imagenet as pretrained backbone
 - --phi: determine which model to use, you can choose 0(EfficientDet D0) ~ 6(EfficientDet D6) 
@@ -9,20 +9,21 @@
 - --epochs: training epochs
 - pascal: use Pascal VOC dataset format and give dataset path to VOC2007 directory
 
-### Command
+### ***Command***
 For example, train EfficicentDet D0 with ImageNet pretrained backbone and Weighted BiFPN
 
 ```python3 train.py --snapshot imagenet --phi 1 --weighted-bifpn --gpu 3 --random-transform --compute-val-loss --freeze-backbone --batch-size 32 --steps 150 --epochs 100 pascal /opt/shared-disk2/sychou/comp2/VOCdevkit/VOC2007/```
 
 ## Model Evaluation Guide
-### Processes
+### ***Processes***
 
 因為檔案路徑(import utils)的關係，必須把Testing的檔案eval/common.py移到上一層資料夾，方可執行使用。並且注意檔案內以下幾個參數
 1. phi: 選擇EfficientDet的backbone，必須和training時python3 train.py --phi參數選擇的相同
 2. weighted_bifpn: 使否使用weighted BiFPN
 3. PascalVocGenerator: 填上testing dataset的path，例如: '/opt/shared-disk2/sychou/comp2/VOCdevkit/test/VOC2007'
 4. model_path: 填上訓練好的模型weights，例如: '/home/ccchen/sychou/comp2/comp2/efficent_series/EfficientDet/old_checkpoint/pascal_45_0.3772_0.3917.h5'
-### Evaluation Results
+   
+### ***Evaluation Results***
 
 BUJO+ Environment:
 - GPU: 2080Ti 10986MB
@@ -46,6 +47,7 @@ The last two result(Epoch 99) of the first time training. mAp 0.97
 However, I forget to split train and test into different folders. It probably train on test dataset.
 It perhaps overfits.
 
+---
 ### 11/25 Training Checkpoints
 
 - Phi 6: Ran out of memory with batch size 8
