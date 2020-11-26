@@ -16,11 +16,33 @@ MOMENTUM = 0.997
 EPSILON = 1e-4
 
 # According to EfficientDet paper to set weighted BiFPN depth and depth of heads
-weighted_bifpn = [64, 88, 112, 160, 224, 288, 384]
-depth_bifpns = [3, 4, 5, 6, 7, 7, 8]
-depth_heads = [3, 3, 3, 4, 4, 4, 5]
+# The backbones  of EfficientDet
+'''
+The corresponding backbone to EfficientDet Phi
+B0 -> D0(phi 0), B1 -> D1(phi 1), B2 -> D2(phi 2), B3 -> D3(phi 3), B4 -> D4(phi 4), B5 -> D5(phi 5), B6 -> D6(phi 6)
+B6 -> D7(phi 7), B7 -> D7X(phi 8) (IMPORTANT)
+The value of phi is corresponding to the order of the following backbone list
+'''
+backbones = [EfficientNetB0, EfficientNetB1, EfficientNetB2, EfficientNetB3, EfficientNetB4, EfficientNetB5, EfficientNetB6, EfficientNetB6, EfficientNetB7]
+
+# The width of BiFPN which is the number of channels, also named 'fpn_num_filters' in efficientdet-tf2/efficientdet.py
+# The formular of the paper is W = 64 * (1.35 ^ phi)
+w_bifpns = [64, 88, 112, 160, 224, 288, 384,384]
+
+# The depth of BiFPN which is the number of layers, also named 'fpn_cell_repeats' in efficientdet-tf2/efficientdet.py
+# The formular of the paper is D = 3 + phi
+d_bifpns = [3, 4, 5, 6, 7, 7, 8, 8]
+
+# The input image size of EfficientDet
+'''
+It is weired that from original paper, the input image size should be following
+the input image size of EfficientDet of phi 6, 7, 8(7X) is 1280, 1536, 1536
+image_sizes = [512, 640, 768, 896, 1024, 1280, 1280, 1536, 1536]
+'''
 image_sizes = [512, 640, 768, 896, 1024, 1280, 1408]
-backbones = [EfficientNetB0, EfficientNetB1, EfficientNetB2, EfficientNetB3]
+
+
+depth_heads = [3, 3, 3, 4, 4, 4, 5]
 
 # Copy from original, done
 def SeparableConvBlock(num_channels, kernel_size, strides, name, freeze_bn=False):
@@ -56,15 +78,18 @@ class SeparableConvBlock_c(keras.layers.Layer):
     def call(self, inputs):
         return self.f2(self.f1(inputs))
 
+'''
+According to the paper, for each BiFPN block, it use depthwise separable convolution for
+feature fusion, and add batch normalization and activation after each convolution.
+''' 
+# Build Weighted BiFPN
 def build_wBiFPN(features, num_channels, id, freeze_bn=False):
 
     
 
 def EfficientDet(phi, num_classes = 20, num_anchors = 9):
     assert(phi < 8)
-    bifpn_num_filters = [64, 88, 112, 160, 224, 288, 384,384]
-    bifpn_cell_repeats = [3, 4, 5, 6, 7, 7, 8, 8]
-    backbones = [EfficientNetB0, EfficientNetB1, EfficientNetB2, EfficientNetB3]
+    
 
     input_size = image_sizes[phi]
     input_shape = (input_size, input_size, 3)

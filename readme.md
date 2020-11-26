@@ -2,6 +2,16 @@
 
 Our implement is under ```ours``` directory.
 
+## Reference
+
+[Tensorflow Custom layers](https://www.tensorflow.org/tutorials/customization/custom_layers)
+
+[如何使用Keras fit和fit_generator（动手教程)](https://blog.csdn.net/learning_tortosie/article/details/85243310)
+
+[How to Train Your Keras Model (Dramatically Faster)](https://towardsdatascience.com/how-to-train-your-model-dramatically-faster-9ad063f0f718)
+
+[Distributed training with TensorFlow](https://www.tensorflow.org/guide/distributed_training)
+
 ## Model Training Guide
 
 ### ***Command flags***
