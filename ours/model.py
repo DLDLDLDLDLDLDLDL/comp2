@@ -10,6 +10,7 @@ from tensorflow import keras
 
 # Customized modules
 from efficientnet import EfficientNetB0, EfficientNetB1, EfficientNetB2, EfficientNetB3, EfficientNetB4, EfficientNetB5, EfficientNetB6, EfficientNetB7
+from layers import wBiFPNAdd
 
 # Hyperparameters
 MOMENTUM = 0.997
@@ -44,7 +45,7 @@ image_sizes = [512, 640, 768, 896, 1024, 1280, 1408, 1408]
 # The layers of BoxNet & ClassNet
 depth_heads = [3, 3, 3, 4, 4, 4, 5, 5, 5]
 
-# Copy from original, done
+# Reproduce original, done
 def SeparableConvBlock(num_channels, kernel_size, strides, name, freeze_bn=False):
     f1 = keras.layers.SeparableConv2D(num_channels, kernel_size=kernel_size, strides=strides, name=f'{name}/conv2d')
     f2 = keras.layers.BatchNormalization(momentum=MOMENTUM, epsilon=EPSILON, name=f'{name}/bn')
