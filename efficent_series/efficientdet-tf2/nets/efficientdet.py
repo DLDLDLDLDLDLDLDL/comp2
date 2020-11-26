@@ -58,6 +58,7 @@ def build_wBiFPN(features, num_channels, id, freeze_bn=False):
         #-------------------------------------------------------------------------#
 
         #--------------------------构建BIFPN的上下采样循环-------------------------#
+        # Top-Down
         P7_U = layers.UpSampling2D()(P7_in)
         P6_td = wBiFPNAdd(name=f'fpn_cells/cell_{id}/fnode0/add')([P6_in, P7_U])
         P6_td = layers.Activation(lambda x: tf.nn.swish(x))(P6_td)
@@ -75,7 +76,7 @@ def build_wBiFPN(features, num_channels, id, freeze_bn=False):
         P4_td = layers.Activation(lambda x: tf.nn.swish(x))(P4_td)
         P4_td = SeparableConvBlock(num_channels=num_channels, kernel_size=3, strides=1,
                                    name=f'fpn_cells/cell_{id}/fnode2/op_after_combine7')(P4_td)
-
+        # Bottom-Up
         P4_U = layers.UpSampling2D()(P4_td)
         P3_out = wBiFPNAdd(name=f'fpn_cells/cell_{id}/fnode3/add')([P3_in, P4_U])
         P3_out = layers.Activation(lambda x: tf.nn.swish(x))(P3_out)

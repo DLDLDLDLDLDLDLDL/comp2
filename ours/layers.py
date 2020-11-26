@@ -17,6 +17,7 @@ class BatchNormalization(keras.layers.BatchNormalization):
         else:
             return super(BatchNormalization, self).call(inputs, training=(not self.trainable), **kwargs)
 
+# Implement "Fast Normalized Fusion"
 class wBiFPNAdd(keras.layers.Layer):
     def __init__(self, epsilon=1e-4, **kwargs):
         super(wBiFPNAdd, self).__init__(**kwargs)
