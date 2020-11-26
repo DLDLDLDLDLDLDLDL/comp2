@@ -22,14 +22,14 @@ depth_heads = [3, 3, 3, 4, 4, 4, 5]
 image_sizes = [512, 640, 768, 896, 1024, 1280, 1408]
 backbones = [EfficientNetB0, EfficientNetB1, EfficientNetB2, EfficientNetB3]
 
-# Copy from original
-def SeparableConvBlock(num_channels, kernel_size, strides, name):
+# Copy from original, done
+def SeparableConvBlock(num_channels, kernel_size, strides, name, freeze_bn=False):
     f1 = keras.layers.SeparableConv2D(num_channels, kernel_size=kernel_size, strides=strides, name=f'{name}/conv2d')
     f2 = keras.layers.BatchNormalization(momentum=MOMENTUM, epsilon=EPSILON, name=f'{name}/bn')
     # conv_bn = lambda *args, **kwargs: f2(f1(args, **kwargs))
     return reduce(lambda f, g: lambda *args, **kwargs: g(f(*args, **kwargs)), (f1, f2))
 
-# Rewrite SeparableConvBlock with layer subclass
+# Rewrite SeparableConvBlock with layer subclass, done
 class SeparableConvBlock_c(keras.layers.Layer):
     def __init__(self, num_channels, kernel_size, strides, momentum=MOMENTUM, epsilon=EPSILON):
         super(SeparableConvBlock_c, self).__init__()
@@ -56,13 +56,20 @@ class SeparableConvBlock_c(keras.layers.Layer):
     def call(self, inputs):
         return self.f2(self.f1(inputs))
 
+def build_wBiFPN(features, num_channels, id, freeze_bn=False):
+
+    
+
 def EfficientDet(phi, num_classes = 20, num_anchors = 9):
     assert(phi < 8)
     bifpn_num_filters = [64, 88, 112, 160, 224, 288, 384,384]
     bifpn_cell_repeats = [3, 4, 5, 6, 7, 7, 8, 8]
     backbones = [EfficientNetB0, EfficientNetB1, EfficientNetB2, EfficientNetB3]
 
-    img_inputs = keras.layers.Input(shape=(image_sizes[phi]))
+    input_size = image_sizes[phi]
+    input_shape = (input_size, input_size, 3)
+
+    img_inputs = keras.layers.Input(shape=input_shape)
     x = SeparableConvBlock_c(num_channels=3, kernel_size=3, strides=1)(img_inputs)
     model = keras.models.Model(inputs=[img_inputs], outputs=x, name='efficientdet')
 
