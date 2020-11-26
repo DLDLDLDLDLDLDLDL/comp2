@@ -10,7 +10,7 @@ import collections
 import numpy as np
 from tensorflow.keras import backend
 from six.moves import xrange
-from nets.layers import BatchNormalization
+from layers import BatchNormalization
 from tensorflow.keras import layers
 
 BASE_WEIGHTS_PATH = (

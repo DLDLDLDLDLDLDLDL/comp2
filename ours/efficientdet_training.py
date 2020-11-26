@@ -9,4 +9,4 @@ from matplotlib.colors import rgb_to_hsv, hsv_to_rgb
 import cv2
 
 def preprocess_input(image):
-    
+    # TODO
