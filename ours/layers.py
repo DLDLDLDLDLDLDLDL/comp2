@@ -19,7 +19,7 @@ from tensorflow import keras
 #         else:
 #             return super(BatchNormalization, self).call(inputs, training=(not self.trainable), **kwargs)
 
-# Implement "Fast Normalized Fusion", done
+# Implement "Fast Normalized Fusion", done, pass test
 class wBiFPNAdd(keras.layers.Layer):
     def __init__(self, epsilon=1e-4, **kwargs):
         super(wBiFPNAdd, self).__init__(**kwargs)
@@ -35,16 +35,14 @@ class wBiFPNAdd(keras.layers.Layer):
 
     def call(self, inputs, **kwargs):
         w = tf.nn.relu(self.w)
-        sum = tf.reduce_sum([w[i] * inputs[i] for i in range(len(inputs))], axis=0)
-        x = sum / (tf.reduce_sum(w) + self.epsilon)
+        s = tf.reduce_sum([w[i] * inputs[i] for i in range(len(inputs))], axis=0)
+        x = s / (tf.reduce_sum(w) + self.epsilon)
         return x
 
     def compute_output_shape(self, input_shape):
         return input_shape[0]
 
     def get_config(self):
-        config = super(wBiFPNAdd, self).get_config().update({'epsilon': self.epsilon})
+        config = super(wBiFPNAdd, self).get_config()
+        config.update({'epsilon': self.epsilon})
         return config
-
-
-        
