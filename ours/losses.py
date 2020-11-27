@@ -5,7 +5,7 @@ import pandas as pd
 import tensorflow as tf
 from tensorflow import keras
 
-# Implement Focal Loss, done
+# Implement Focal Loss, done, pass test
 def focal(alpha=0.25, gamma=2.0):
     '''
     Here we follow the paper "Focal Loss for Dense Object Detection" to implement Focal Loss
@@ -55,6 +55,7 @@ def focal(alpha=0.25, gamma=2.0):
 
     return _focal
 
+# Implement smooth L1 Loss, done, pass test
 def smooth_l1(sigma=3.0):
     sigma_sq = sigma ** 2
     def _smooth_l1(y_true, y_pred):
