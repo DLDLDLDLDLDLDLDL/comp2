@@ -83,3 +83,10 @@ Epoch 45, mAp 0.73. Train 7.5 hours
 Epoch 100, 0.9399, Train 15 hours
 
 Testing mAP: 0.7704
+
+### 11/27 Training Checkpoints
+
+- phi 2: Just train 44 epoch
+
+#### ***phi1-ep045-loss0.491-val_loss0.495.h5***
+Epoch 45, batch size 16, Train 9 hours, Kaggle score 0.79725
