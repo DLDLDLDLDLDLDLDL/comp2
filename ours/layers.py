@@ -19,7 +19,7 @@ from tensorflow import keras
 #         else:
 #             return super(BatchNormalization, self).call(inputs, training=(not self.trainable), **kwargs)
 
-# Implement "Fast Normalized Fusion", done, pass test
+# Implement "Fast Normalized Fusion", done
 class wBiFPNAdd(keras.layers.Layer):
     def __init__(self, epsilon=1e-4, **kwargs):
         super(wBiFPNAdd, self).__init__(**kwargs)

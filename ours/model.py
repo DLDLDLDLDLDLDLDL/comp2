@@ -14,7 +14,7 @@ MOMENTUM = 0.997
 EPSILON = 1e-4
 
 # According to EfficientDet paper to set weighted BiFPN depth and depth of heads
-# The backbones  of EfficientDet, done, pass test
+# The backbones  of EfficientDet, done
 '''
 The corresponding backbone to EfficientDet Phi
 B0 -> D0(phi 0), B1 -> D1(phi 1), B2 -> D2(phi 2), B3 -> D3(phi 3), B4 -> D4(phi 4), B5 -> D5(phi 5), B6 -> D6(phi 6)
@@ -23,15 +23,15 @@ The value of phi is corresponding to the order of the following backbone list
 '''
 backbones = [EfficientNetB0, EfficientNetB1, EfficientNetB2, EfficientNetB3, EfficientNetB4, EfficientNetB5, EfficientNetB6, EfficientNetB6, EfficientNetB7]
 
-# The width of BiFPN which is the number of channels, also named 'fpn_num_filters' in efficientdet-tf2/efficientdet.py, done, pass test
+# The width of BiFPN which is the number of channels, also named 'fpn_num_filters' in efficientdet-tf2/efficientdet.py, done
 # The formular of the paper is W = 64 * (1.35 ^ phi)
 w_bifpns = [64, 88, 112, 160, 224, 288, 384, 384, 384]
 
-# The depth of BiFPN which is the number of layers, also named 'fpn_cell_repeats' in efficientdet-tf2/efficientdet.py, done, pass test
+# The depth of BiFPN which is the number of layers, also named 'fpn_cell_repeats' in efficientdet-tf2/efficientdet.py, done
 # The formular of the paper is D = 3 + phi
 d_bifpns = [3, 4, 5, 6, 7, 7, 8, 8, 8]
 
-# The input image size of EfficientDet, done, pass test
+# The input image size of EfficientDet, done
 '''
 It is weired that from original paper, the input image size should be following
 the input image size of EfficientDet of phi 6, 7, 8(7X) is 1280, 1536, 1536
@@ -42,13 +42,13 @@ image_sizes = [512, 640, 768, 896, 1024, 1280, 1408, 1408]
 # The layers of BoxNet & ClassNet
 depth_heads = [3, 3, 3, 4, 4, 4, 5, 5, 5]
 
-# Reproduce original, done, pass test
+# Reproduce original, done
 def SeparableConvBlock(num_channels, kernel_size, strides, name, freeze_bn=False):
     f1 = keras.layers.SeparableConv2D(num_channels, kernel_size=kernel_size, strides=strides, padding='same', use_bias=True, name=f'{name}/conv')
     f2 = keras.layers.BatchNormalization(momentum=MOMENTUM, epsilon=EPSILON, name=f'{name}/bn')
     return reduce(lambda f, g: lambda *args, **kwargs: g(f(*args, **kwargs)), (f1, f2))
 
-# Rewrite SeparableConvBlock with layer subclass, done, pass test
+# Rewrite SeparableConvBlock with layer subclass, done
 class SeparableConvBlock_c(keras.layers.Layer):
     def __init__(self, num_channels, kernel_size, strides, name, momentum=MOMENTUM, epsilon=EPSILON, freeze_bn=False):
         super(SeparableConvBlock_c, self).__init__()
@@ -81,7 +81,7 @@ feature fusion, and add batch normalization and activation after each convolutio
 Process:
 Depthwise separable convolution -> batch normalization -> activation
 ''' 
-# Build Weighted BiFPN, done, pass test
+# Build Weighted BiFPN, done
 def build_wBiFPN(features, num_channels, id, freeze_bn=False):
     if id == 0:
         '''
@@ -105,10 +105,10 @@ def build_wBiFPN(features, num_channels, id, freeze_bn=False):
                                 name=f'{bifpn}{id}/{pre}conv2d')(P4_in)
         P4_in = keras.layers.BatchNormalization(momentum=MOMENTUM, epsilon=EPSILON,
                                             name=f'{bifpn}{id}/{pn}/{pre}bn')(P4_in)
-        # P4_in_2 = layers.Conv2D(num_channels, kernel_size=1, padding='same',
-        #                         name=f'{bifpn}{id}/{pn}/{pre}conv2d')(P4_in)
-        # P4_in_2 = layers.BatchNormalization(momentum=MOMENTUM, epsilon=EPSILON,
-        #                                     name=f'{bifpn}{id}/{pn}/{pre}bn')(P4_in_2)
+        P4_in_2 = keras.layers.Conv2D(num_channels, kernel_size=1, padding='same',
+                                name=f'{bifpn}{id}/{pn}/{pre}conv2d-2')(P4_in)
+        P4_in_2 = keras.layers.BatchNormalization(momentum=MOMENTUM, epsilon=EPSILON,
+                                            name=f'{bifpn}{id}/{pn}/{pre}bn-2')(P4_in_2)
         
         pn = 5
         P5_in = C5
@@ -116,10 +116,10 @@ def build_wBiFPN(features, num_channels, id, freeze_bn=False):
                                 name=f'{bifpn}{id}/{pn}/{pre}conv2d')(P5_in)
         P5_in = keras.layers.BatchNormalization(momentum=MOMENTUM, epsilon=EPSILON,
                                             name=f'{bifpn}{id}/{pn}/{pre}bn')(P5_in)
-        # P5_in_2 = layers.Conv2D(num_channels, kernel_size=1, padding='same',
-        #                         name=f'{bifpn}{id}/{pn}/{pre}conv2d')(P5_in)
-        # P5_in_2 = layers.BatchNormalization(momentum=MOMENTUM, epsilon=EPSILON,
-        #                                     name=f'{bifpn}{id}/{pn}/{pre}bn')(P5_in_2)
+        P5_in_2 = keras.layers.Conv2D(num_channels, kernel_size=1, padding='same',
+                                name=f'{bifpn}{id}/{pn}/{pre}conv2d-2')(P5_in)
+        P5_in_2 = keras.layers.BatchNormalization(momentum=MOMENTUM, epsilon=EPSILON,
+                                            name=f'{bifpn}{id}/{pn}/{pre}bn-2')(P5_in_2)
 
         pn = 6
         P6_in = keras.layers.Conv2D(num_channels, kernel_size=1, padding='same', name=f'{bifpn}{id}/{pn}/{pre}conv2d')(C5)
@@ -211,8 +211,12 @@ def build_wBiFPN(features, num_channels, id, freeze_bn=False):
     P3_Down = keras.layers.MaxPooling2D(pool_size=3, strides=2, padding='same')(P3_out)
 
     pn = 4
+    if id == 0:
+        P4_out = wBiFPNAdd(name=f'{bifpn}{id}/{pn}/{pre}wadd')([P4_in_2, P4_td, P3_Down])
+    else:
+        P4_out = wBiFPNAdd(name=f'{bifpn}{id}/{pn}/{pre}wadd')([P4_in, P4_td, P3_Down])
     # P4_out = wBiFPNAdd(name=f'{bifpn}{id}/{pn}/{pre}wadd')([P4_in_2, P4_td, P3_Down])
-    P4_out = wBiFPNAdd(name=f'{bifpn}{id}/{pn}/{pre}wadd')([P4_in, P4_td, P3_Down])
+    # P4_out = wBiFPNAdd(name=f'{bifpn}{id}/{pn}/{pre}wadd')([P4_in, P4_td, P3_Down])
     # The original code for swish
     # P4_out = layers.Activation(tf.nn.swish)(P4_out)
     P4_out = tf.nn.swish(P4_out)
@@ -221,8 +225,12 @@ def build_wBiFPN(features, num_channels, id, freeze_bn=False):
     P4_Down = keras.layers.MaxPooling2D(pool_size=3, strides=2, padding='same')(P4_out)
 
     pn = 5
+    if id == 0:
+        P5_out = wBiFPNAdd(name=f'{bifpn}{id}/{pn}/{pre}wadd')([P5_in_2, P5_td, P4_Down])
+    else:
+        P5_out = wBiFPNAdd(name=f'{bifpn}{id}/{pn}/{pre}wadd')([P5_in, P5_td, P4_Down])    
     # P5_out = wBiFPNAdd(name=f'{bifpn}{id}/{pn}/{pre}wadd')([P5_in_2, P5_td, P4_Down])
-    P5_out = wBiFPNAdd(name=f'{bifpn}{id}/{pn}/{pre}wadd')([P5_in, P5_td, P4_Down])
+    # P5_out = wBiFPNAdd(name=f'{bifpn}{id}/{pn}/{pre}wadd')([P5_in, P5_td, P4_Down])
     # P5_out = layers.Activation(tf.nn.swish)(P5_out) 
     P5_out = tf.nn.swish(P5_out)
     P5_out = SeparableConvBlock(num_channels=num_channels, kernel_size=3, strides=1,

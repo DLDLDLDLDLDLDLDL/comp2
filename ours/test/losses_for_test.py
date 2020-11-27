@@ -6,7 +6,7 @@ import tensorflow as tf
 from tensorflow import keras
 
 # Implement Focal Loss, done
-def focal(alpha=0.25, gamma=2.0):
+def foacl_loss(alpha=0.25, gamma=2.0):
     '''
     Here we follow the paper "Focal Loss for Dense Object Detection" to implement Focal Loss
     The focal loss is used to compute the loss of the classification and it increase the weight of the positive samples to 
@@ -47,7 +47,7 @@ def focal(alpha=0.25, gamma=2.0):
         # Normalize
         # epsilon = 1e-9
         normalizer = tf.where(tf.equal(true_anchor_states, 1))
-        normalizer = keras.backend.cast(tf.keras.backend.shape(normalizer)[0], keras.backend.floatx())
+        normalizer = keras.backend.cast(normalizer.shape[0], keras.backend.floatx())
         normalizer = keras.backend.maximum(keras.backend.cast_to_floatx(1.0), normalizer)
 
         # return tf.reduce_sum(loss) / (normalizer + epsilon)
@@ -78,7 +78,7 @@ def smooth_l1(sigma=3.0):
 
         # Normalize
         # epsilon = 1e-9
-        normalizer = keras.backend.maximum(1, tf.keras.backend.shape(true_not_ignore_indices)[0])
+        normalizer = keras.backend.maximum(1, true_not_ignore_indices.shape[0])
         normalizer = keras.backend.cast(normalizer, keras.backend.floatx())
 
         # return tf.reduce_sum(l1_loss) / (normalizer + epsilon)
