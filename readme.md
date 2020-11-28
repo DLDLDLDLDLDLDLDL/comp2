@@ -90,3 +90,16 @@ Testing mAP: 0.7704
 
 #### ***phi1-ep045-loss0.491-val_loss0.495.h5***
 Epoch 45, batch size 16, Train 9 hours, Kaggle score 0.79725
+
+### 11/28 Training Checkpoints
+
+- phi 1: Train 100 epoch(50 epoch train, 50 epoch fine tune)
+#### ***phi1-Epoch100-Total_Loss0.4847-Val_Loss0.4685.h5***
+
+Train 100 epoch(50 epoch train, 50 epoch fine tune)
+
+50 epoch train batch size 32
+
+50 epoch fine tune batch size 4
+
+Train 16 hours
