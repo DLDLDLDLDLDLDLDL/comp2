@@ -44,7 +44,7 @@ image_sizes = [512, 640, 768, 896, 1024, 1280, 1280, 1536, 1536]
 image_sizes = [512, 640, 768, 896, 1024, 1280, 1408, 1408]
 
 # The layers of BoxNet & ClassNet
-depth_heads = [3, 3, 3, 4, 4, 4, 5, 5, 5]
+d_heads = [3, 3, 3, 4, 4, 4, 5, 5, 5]
 
 # Reproduce original, done
 def SeparableConvBlock(num_channels, kernel_size, strides, name, freeze_bn=False):
@@ -305,7 +305,48 @@ class ClassNet(models.Model):
         outputs = layers.Activation('sigmoid')(outputs)
         level += 1
         return outputs
-        
+
+class BoxNet(models.Model):
+    def __init__(self, width, depth, num_anchors=9, separable_conv=True, freeze_bn=False, detect_quadrangle=False, **kwargs):
+        super(BoxNet, self).__init__(**kwargs)
+        self.width = width
+        self.depth = depth
+        self.num_anchors = num_anchors
+        self.separable_conv = separable_conv
+        self.detect_quadrangle = detect_quadrangle
+        num_values = 9 if detect_quadrangle else 4
+
+    if separable_conv:
+        kernel_initializer = {
+            'depthwise_initializer': initializers.VarianceScaling(),
+            'pointwise_initializer': initializers.VarianceScaling(),
+        }
+        self.convs = [layers.SeparableConv2D(filters=width, name=f'{self.name}/box-{i}', 'kernel_size': 3, 'strides': 1, 'padding': 'same', 'bias_initializer': 'zeros', **kernel_initializer) for i in range(depth)]
+        self.head = layers.SeparableConv2D(filters=num_anchors * num_values,name=f'{self.name}/box-predict', 'kernel_size': 3, 'strides': 1, 'padding': 'same', 'bias_initializer': 'zeros', **kernel_initializer)
+    
+    else:
+        kernel_initializer = {
+            'kernel_initializer': initializers.RandomNormal(mean=0.0, stddev=0.01, seed=None)
+        }
+        self.convs = [layers.SeparableConv2D(filters=width, name=f'{self.name}/box-{i}', 'kernel_size': 3, 'strides': 1, 'padding': 'same', 'bias_initializer': 'zeros', **kernel_initializer) for i in range(depth)]
+        self.head = layers.SeparableConv2D(filters=num_anchors * num_values,name=f'{self.name}/box-predict', 'kernel_size': 3, 'strides': 1, 'padding': 'same', 'bias_initializer': 'zeros', **kernel_initializer)
+    
+    self.bns = [[layers.BatchNormalization(momentum=MOMENTUM, epsilon=EPSILON, name=f'{self.name}/box-{i}-bn-{j}') for j inrange(3, 8)]for i in range(depth)]
+    self.level = 0
+    
+    def call(self, inputs, **kwargs):
+        feature, level = inputs
+        for i in range(self.depth):
+                feature = self.convs[i](feature)
+                feature = self.bns[i][self.level](feature)
+                feature = layers.Lambda(lambda x: tf.nn.swish(x))(feature)
+        outputs = self.head(feature)
+        outputs = layers.Reshape((-1, num_values))(outputs)
+        outputs = layers.Activation('sigmoid')(outputs)
+        self.level += 1
+        return outputs
+    
+
 def get_efficientdet_info(phi):
     return {
         'BiFPN_width': w_bifpns[phi],
@@ -318,6 +359,9 @@ def get_efficientdet_info(phi):
 def EfficientDet(phi, num_classes = 20, num_anchors = 9, freeze_bn=False):
     # Phi 0(D0) ~ 8(7X)
     assert(phi < 9)
+    width_bifpn = w_bifpns[phi]
+    depth_bifpn = d_bifpns[phi]
+    depth_head = d_heads[phi]
     input_size = image_sizes[phi]
     input_shape = (input_size, input_size, 3)
     backbone = backbones[phi]
@@ -329,7 +373,19 @@ def EfficientDet(phi, num_classes = 20, num_anchors = 9, freeze_bn=False):
     for i in range(d_bifpns[phi]):
         bifpn_out = build_wBiFPN(features2bifpn, w_bifpns[phi], i)
 
-    # model = keras.models.Model(inputs=[img_inputs], outputs=[], name='efficientdet')
+    # Class Net
+    class_net = ClasNet(width_bifpn, depth_head, num_classes=num_classes, freeze_bn=freeze_bn, name='class_net')
+    classifier = [class_net.call([feature, i]) for i, feature in enumerate(bifpn_out)]
+    classifier_out = layers.Concatenate(axis=1, name="classifier")(classifier)
+
+    # Box Net
+    box_net = BoxNet(width_bifpn, depth_head, num_anchors=num_anchors, freeze_bn=freeze_bn,name="box_net")
+    regressor = [box_net.call(feature, i) for i, feature in enumerate(bifpn_out)]
+    regressor_out = layers.Concatenate(axis=1, name="regressor")(regressor)
+
+    model = keras.models.Model(inputs=[img_inputs], outputs=[regressor_out, classifier_out], name='efficientdet')
+
+    return model
 
 if __name__ == '__main__':
     phi = 0
