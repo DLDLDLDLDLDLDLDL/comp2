@@ -305,6 +305,15 @@ class ClassNet(models.Model):
         outputs = layers.Activation('sigmoid')(outputs)
         level += 1
         return outputs
+        
+def get_efficientdet_info(phi):
+    return {
+        'BiFPN_width': w_bifpns[phi],
+        'BiFPN_depth': d_bifpns[phi],
+        'image_size': image_sizes[phi],
+        'image_shape': (image_sizes[phi], image_sizes[phi]),
+        'depth_head': depth_heads[phi],
+    }
 
 def EfficientDet(phi, num_classes = 20, num_anchors = 9, freeze_bn=False):
     # Phi 0(D0) ~ 8(7X)
