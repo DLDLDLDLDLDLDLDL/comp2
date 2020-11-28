@@ -258,6 +258,7 @@ def build_wBiFPN(features, num_channels, id, freeze_bn=False):
     
     return [P3_out, P4_out, P5_out, P6_out, P7_out]
 
+# Implement ClassNet, done
 class ClassNet(models.Model):
     def __init__(self, width, depth, num_classes=20, num_anchors=9, separable_conv=True, freeze_bn=False, **kwargs):
         super(ClassNet, self).__init__(**kwargs)
@@ -306,6 +307,7 @@ class ClassNet(models.Model):
         level += 1
         return outputs
 
+# Implement BoxNet, done
 class BoxNet(models.Model):
     def __init__(self, width, depth, num_anchors=9, separable_conv=True, freeze_bn=False, detect_quadrangle=False, **kwargs):
         super(BoxNet, self).__init__(**kwargs)
@@ -356,6 +358,7 @@ def get_efficientdet_info(phi):
         'depth_head': depth_heads[phi],
     }
 
+# Implement EfficientDet, done
 def EfficientDet(phi, num_classes = 20, num_anchors = 9, freeze_bn=False):
     # Phi 0(D0) ~ 8(7X)
     assert(phi < 9)
