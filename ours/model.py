@@ -374,7 +374,8 @@ def EfficientDet(phi, num_classes = 20, num_anchors = 9, freeze_bn=False):
     
     # Here we only implement weighted BiFPN becasue of better performance
     for i in range(d_bifpns[phi]):
-        bifpn_out = build_wBiFPN(features2bifpn, w_bifpns[phi], i)
+        features2bifpn = build_wBiFPN(features2bifpn, w_bifpns[phi], i)
+    bifpn_out = features2bifpn
 
     # Class Net
     class_net = ClasNet(width_bifpn, depth_head, num_classes=num_classes, freeze_bn=freeze_bn, name='class_net')
