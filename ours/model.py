@@ -4,6 +4,10 @@ import numpy as np
 import pandas as pd
 import tensorflow as tf
 from tensorflow import keras
+from tensorflow.keras import models
+from tensorflow.keras import layers
+from tensorflow.keras import initializers
+from utils.utils import PriorProbability
 
 # Customized modules
 from efficientnet import EfficientNetB0, EfficientNetB1, EfficientNetB2, EfficientNetB3, EfficientNetB4, EfficientNetB5, EfficientNetB6, EfficientNetB7
@@ -253,6 +257,54 @@ def build_wBiFPN(features, num_channels, id, freeze_bn=False):
                                 name=f'{bifpn}{id}/{pn}/{pre}sepconv')(P7_out)
     
     return [P3_out, P4_out, P5_out, P6_out, P7_out]
+
+class ClassNet(models.Model):
+    def __init__(self, width, depth, num_classes=20, num_anchors=9, separable_conv=True, freeze_bn=False, **kwargs):
+        super(ClassNet, self).__init__(**kwargs)
+        self.width = width
+        self.depth = depth
+        self.num_classes = num_classes
+        self.num_anchors = num_anchors
+        self.separable_conv = separable_conv
+
+        if self.separable_conv:
+            kernel_initializer = {
+                'depthwise_initializer': initializers.VarianceScaling(),
+                'pointwise_initializer': initializers.VarianceScaling(),
+            }
+            self.convs = [layers.SeparableConv2D(filters=width, bias_initializer='zeros', name=f'{self.name}/class-{i}',
+                                                 kernel_size=3, strides=1, padding='same',**kernel_initializer)
+                          for i in range(depth)]
+            self.head = layers.SeparableConv2D(filters=num_classes * num_anchors,
+                                               bias_initializer=PriorProbability(probability=0.01),
+                                               name=f'{self.name}/class-predict', kernel_size=3, strides=1, padding='same',
+                                               **kernel_initializer)
+        else:
+            kernel_initializer = {
+                'kernel_initializer': initializers.RandomNormal(mean=0.0, stddev=0.01, seed=None)
+            }
+            self.convs = [layers.Conv2D(filters=width, bias_initializer='zeros', name=f'{self.name}/class-{i}',
+                                        kernel_size=3, strides=1, padding='same',**kernel_initializer)
+                          for i in range(depth)]
+            self.head = layers.Conv2D(filters=num_classes * num_anchors,
+                                      bias_initializer=PriorProbability(probability=0.01),
+                                      name='class-predict', kernel_size=3, strides=1, padding='same',**kernel_initializer)
+        self.bns = [
+            [layers.BatchNormalization(momentum=MOMENTUM, epsilon=EPSILON, name=f'{self.name}/class-{i}-bn-{j}') for j
+             in range(3, 8)]
+            for i in range(depth)]
+
+    def call(self, inputs, **kwargs):
+        feature, level = inputs
+        for i in range(self.depth):
+            feature = self.convs[i](feature)
+            feature = self.bns[i][level](feature)
+            feature = layers.Lambda(lambda x: tf.nn.swish(x))(feature)
+        outputs = self.head(feature)
+        outputs = layers.Reshape((-1, self.num_classes))(outputs)
+        outputs = layers.Activation('sigmoid')(outputs)
+        level += 1
+        return outputs
 
 def EfficientDet(phi, num_classes = 20, num_anchors = 9, freeze_bn=False):
     # Phi 0(D0) ~ 8(7X)
