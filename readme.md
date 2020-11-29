@@ -47,6 +47,18 @@ BUJO+ Environment:
 
 [***Here***](https://drive.google.com/drive/folders/1xFXLxnsf_HqB7hy66OikNNzLpItV3ctG) is the  trained checkpoint.
 
+## Model Prediction Guide
+### ***Processes***
+
+1. 將 efficientdet.py 的 model_path 改成自己的 model，並將 phi 改成正確的 phi
+2. predict.py 裡面有兩個段落，上面是可以偵測圖片的，下面是生成 test_prediction.txt
+3. 執行 predict.py 生成 test_prediction.txt
+4. 確保 txt2csv.py 跟 test_prediction.txt 在同個資料夾下，執行 txt2csv.py 產生最終的 output.csv 
+
+常見問題 :
+1. 一般預測用 predict.py 的 51 行，comp2 用 predict.py 的 52 行
+2. 轉檔部分請用 txt2csv.py 否則容易發生各種難以預料的環境問題 (切勿直接使用 evaluate.py 生成答案)
+
 ### 11/24 Training Checkpoints
 
 - command:
@@ -121,4 +133,8 @@ Train 176 epoch(0~50 epoch training, 50~100 epoch fine tune, 100~176 epoch train
 
 phi3-Epoch85-Total_Loss0.3117-Val_Loss0.3696.h5
 
+<<<<<<< HEAD
 Train 24 hours(or more)
+=======
+Train 12 hours
+>>>>>>> ffcb2194419cd19dda10aa364e22fe11cd5bfc69
