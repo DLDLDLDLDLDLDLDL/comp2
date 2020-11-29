@@ -103,3 +103,14 @@ Train 100 epoch(50 epoch train, 50 epoch fine tune)
 50 epoch fine tune batch size 4
 
 Train 16 hours
+
+### 11/29 Training Checkpoints
+
+
+#### ***phi1-Epoch100-Total_Loss0.4847-Val_Loss0.4685.h5***
+
+Train 85 epoch(No fine tune), batch size 8
+
+phi3-Epoch85-Total_Loss0.3117-Val_Loss0.3696.h5
+
+Train 12 hours
