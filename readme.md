@@ -111,6 +111,14 @@ Train 16 hours
 
 Train 85 epoch(No fine tune), batch size 8
 
-phi3-Epoch85-Total_Loss0.3117-Val_Loss0.3696.h5
+#### ***phi3-Epoch85-Total_Loss0.3117-Val_Loss0.3696.h5***
 
 Train 12 hours
+
+#### ***phi1-Epoch176-Total_Loss0.6145-Val_Loss0.6303.h5***
+
+Train 176 epoch(0~50 epoch training, 50~100 epoch fine tune, 100~176 epoch training), batch size 24
+
+phi3-Epoch85-Total_Loss0.3117-Val_Loss0.3696.h5
+
+Train 24 hours(or more)
