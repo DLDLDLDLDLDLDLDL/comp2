@@ -131,7 +131,7 @@ def shift(shape, stride, anchors):
     return shifted_anchors
 
 def get_anchors(image_size):
-    border = image_size
+    border = image_size # 根據phi有不同的image_size
     features = [image_size/8,image_size/16,image_size/32,image_size/64,image_size/128]
     shapes = []
     for feature in features:

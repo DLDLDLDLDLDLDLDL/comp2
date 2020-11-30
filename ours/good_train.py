@@ -1,10 +1,12 @@
+import os
 import numpy as np
 import tensorflow as tf
 from tensorflow import keras
 from tensorflow.keras.optimizers import Adam
 from nets.efficientdet_training import Generator
-from nets.efficientdet_training import focal,smooth_l1 
-from nets.efficientdet import Efficientdet
+# from nets.efficientdet_training import focal,smooth_l1 
+from nets.losses_for_test import focal,smooth_l1 
+from nets.efficientdet_test import Efficientdet
 from tensorflow.keras.callbacks import TensorBoard, ReduceLROnPlateau, EarlyStopping
 from utils.utils import BBoxUtility, ModelCheckpoint
 from utils.anchors import get_anchors
@@ -86,7 +88,7 @@ def fit_one_epoch(net, focal_loss, smooth_l1_loss, optimizer, epoch, epoch_size,
     print('Finish Validation')
     print('\nEpoch:'+ str(epoch+1) + '/' + str(Epoch))
     print('Total Loss: %.4f || Val Loss: %.4f ' % (total_loss/(epoch_size+1),val_loss/(epoch_size_val+1)))
-    net.save_weights('logs/Epoch%d-Total_Loss%.4f-Val_Loss%.4f.h5'%((epoch+1),total_loss/(epoch_size+1),val_loss/(epoch_size_val+1)))
+    net.save_weights('logs/phi%d-Epoch%d-Total_Loss%.4f-Val_Loss%.4f.h5'%(phi, (epoch+1),total_loss/(epoch_size+1),val_loss/(epoch_size_val+1)))
       
 #---------------------------------------------------#
 #   获得类和先验框
@@ -123,17 +125,17 @@ if __name__ == "__main__":
     #-------------------------------------------#
     #   权值文件的下载请看README
     #-------------------------------------------#
-    model_path = "model_data/efficientdet-d0-voc.h5"
+    #model_path = "logs/phi1-Epoch100-Total_Loss0.4847-Val_Loss0.4685.h5"
     #-------------------------------#
     #   Dataloder的使用
     #-------------------------------#
     Use_Data_Loader = True
 
     model = Efficientdet(phi,num_classes=NUM_CLASSES)
-    priors = get_anchors(image_sizes[phi]) # 根據phi有不同的image_size
+    priors = get_anchors(image_sizes[phi])
     bbox_util = BBoxUtility(NUM_CLASSES, priors)
 
-    model.load_weights(model_path,by_name=True,skip_mismatch=True)
+#     model.load_weights(model_path,by_name=True,skip_mismatch=True)
 
     # 0.1用于验证，0.9用于训练
     val_split = 0.1
@@ -161,8 +163,8 @@ if __name__ == "__main__":
         #--------------------------------------------#
         BATCH_SIZE = 24
         Lr = 1e-3
-        Init_Epoch = 0
-        Freeze_Epoch = 50
+        Init_Epoch = 100
+        Freeze_Epoch = 180
 
         generator = Generator(bbox_util, BATCH_SIZE, lines[:num_train], lines[num_train:],
                         (image_sizes[phi], image_sizes[phi]),NUM_CLASSES)
@@ -198,6 +200,16 @@ if __name__ == "__main__":
             fit_one_epoch(model, focal(), smooth_l1(), optimizer, epoch, epoch_size, epoch_size_val, gen, gen_val, 
                         Freeze_Epoch, get_train_step_fn())
 
+        # for i in range(freeze_layers[phi]):
+        #     model.layers[i].trainable = True
+
+        # Freeze_Epoch = 50
+        # Epoch = 100
+
+        # for epoch in range(Freeze_Epoch,Epoch):
+        #     fit_one_epoch(model, focal(), smooth_l1(), optimizer, epoch, epoch_size, epoch_size_val, gen, gen_val, 
+        #                 Epoch, get_train_step_fn())
+
     for i in range(freeze_layers[phi]):
         model.layers[i].trainable = True
 
@@ -205,10 +217,10 @@ if __name__ == "__main__":
         #--------------------------------------------#
         #   BATCH_SIZE不要太小，不然训练效果很差
         #--------------------------------------------#
-        BATCH_SIZE = 24
+        BATCH_SIZE = 4
         Lr = 5e-5
-        Freeze_Epoch = 50
-        Epoch = 100
+        Freeze_Epoch = 180
+        Epoch = 200
 
         generator = Generator(bbox_util, BATCH_SIZE, lines[:num_train], lines[num_train:],
                         (image_sizes[phi], image_sizes[phi]),NUM_CLASSES)
