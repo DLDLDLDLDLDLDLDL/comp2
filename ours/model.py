@@ -14,8 +14,8 @@ from efficientnet import EfficientNetB0, EfficientNetB1, EfficientNetB2, Efficie
 from layers import wBiFPNAdd
 
 # Hyperparameters
-MOMENTUM = 0.997
-EPSILON = 1e-4
+MOMENTUM = 0.99
+EPSILON = 1e-3
 
 # According to EfficientDet paper to set weighted BiFPN depth and depth of heads
 # The backbones  of EfficientDet, done
