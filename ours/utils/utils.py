@@ -184,16 +184,15 @@ class BBoxUtility(object):
         best_iou_idx = best_iou_idx[best_iou_mask]
 
         assign_num = len(best_iou_idx)
-        # 保留重合程度最大的先验框的应该有的预测结果
-        # 哪些先验框存在真实框
+        # 保留重合程度最大的 priors box 的預測結果
         encoded_boxes = encoded_boxes[:, best_iou_mask, :]
 
         assignment[:, :4][best_iou_mask] = encoded_boxes[best_iou_idx,np.arange(assign_num),:4]
-        # 4代表为背景的概率，为0
+        # 4 代表一定不會被當成背景
         assignment[:, 4][best_iou_mask] = 1
         assignment[:, 5:-1][best_iou_mask] = boxes[best_iou_idx, 4:]
         assignment[:, -1][best_iou_mask] = 1
-        # 通过assign_boxes我们就获得了，输入进来的这张图片，应该有的预测结果是什么样子的
+        # 通過 assign_boxes 可以得到 input_image 應該有的預測結果是怎麼樣的
 
         return assignment
         
