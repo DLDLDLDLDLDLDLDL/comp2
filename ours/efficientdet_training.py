@@ -9,8 +9,15 @@ from matplotlib.colors import rgb_to_hsv, hsv_to_rgb
 import cv2
 
 def preprocess_input(image):
-    # TODO
+    image /= 255
+    mean=(0.406, 0.456, 0.485)
+    std=(0.225, 0.224, 0.229)
+    image -= mean
+    image /= std
+    return image
 
+def rand(a=0, b=1):
+    return np.random.rand()*(b-a) + a
 
 class Generator(object):
 
@@ -130,12 +137,12 @@ class Generator(object):
                     #預測未變化圖片的輸出結果
                     assignment = self.bbox_util.assign_boxes(y)
                     regression = assignment[:,:5]
-                    classification = assignment[:,5:]
+                    classifier = assignment[:,5:]
 
                     #將變化過的圖片當作input,將未變化圖片的預測結果當作變化後圖片的輸出
                     inputs.append(preprocess_input(img))         
                     target0.append(np.reshape(regression,[-1,5]))
-                    target1.append(np.reshape(classification,[-1,self.num_classes+1]))
+                    target1.append(np.reshape(classifier,[-1,self.num_classes+1]))
                     if len(target0) == self.batch_size:
                         tmp_inp = np.array(inputs)
                         tmp_targets = [np.array(target0,dtype=np.float32),np.array(target1,dtype=np.float32)]
