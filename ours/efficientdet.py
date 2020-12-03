@@ -3,7 +3,7 @@ import colorsys
 import pickle
 import os
 import tensorflow as tf
-from model import Efficientdet
+from model import EfficientDet
 from tensorflow.keras import backend as K
 from tensorflow.keras.layers import Input
 from PIL import Image,ImageFont, ImageDraw
@@ -19,11 +19,11 @@ def preprocess_input(image):
     image /= std
     return image
 
-class EfficientDet(object):
+class Efficientdet(object):
     _defaults = {
-        "model_path"    : 'logs/phi2-ep043-loss0.424-val_loss0.443.h5',
+        "model_path"    : 'logs/phi3-Epoch100-Total_Loss0.2920-Val_Loss0.3507.h5',
         "classes_path"  : 'model_data/voc_classes.txt',
-        "phi"           : 2,
+        "phi"           : 3,
         "confidence"    : 0.25,
         "iou"           : 0.3,
     }
@@ -62,8 +62,8 @@ class EfficientDet(object):
         self.num_classes = len(self.class_names)
 
         # 載入模型
-        self.Efficientdet = Efficientdet(self.phi,self.num_classes)
-        self.Efficientdet.load_weights(self.model_path,by_name=True,skip_mismatch=True)
+        self.EfficientDet = EfficientDet(self.phi,self.num_classes)
+        self.EfficientDet.load_weights(self.model_path,by_name=True,skip_mismatch=True)
 
         # self.Efficientdet.summary()
         print('{} model, anchors, and classes loaded.'.format(model_path))
@@ -88,7 +88,7 @@ class EfficientDet(object):
         # prepocess image
         photo = np.reshape(preprocess_input(photo),[1,self.model_image_size[0],self.model_image_size[1],self.model_image_size[2]])
 
-        preds = self.Efficientdet.predict(photo)
+        preds = self.EfficientDet.predict(photo)
         # decode prediction results
         results = self.bbox_util.detection_out(preds, self.prior, confidence_threshold=self.confidence)
         if len(results[0])<=0:
@@ -159,7 +159,7 @@ class EfficientDet(object):
         #print("debug1")
         photo = np.reshape(preprocess_input(photo),[1,self.model_image_size[0],self.model_image_size[1],self.model_image_size[2]])
 
-        preds = self.Efficientdet.predict(photo)
+        preds = self.EfficientDet.predict(photo)
         #print("debug2")
         results = self.bbox_util.detection_out(preds, self.prior, confidence_threshold=self.confidence)
         if len(results[0])<=0:
